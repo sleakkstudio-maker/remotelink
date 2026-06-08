@@ -97,8 +97,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve the web dashboard from /static
-app.mount("/static", StaticFiles(directory="static"), name="static")
+# Serve the web dashboard from /static (only if the directory exists)
+import os
+if os.path.isdir("static"):
+    app.mount("/static", StaticFiles(directory="static"), name="static")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -107,9 +109,11 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 @app.get("/", response_class=HTMLResponse)
 async def root():
-    """Redirect browsers to the dashboard."""
-    with open("static/index.html") as f:
-        return HTMLResponse(f.read())
+    """Serve the dashboard if available, otherwise show a simple status page."""
+    if os.path.isfile("static/index.html"):
+        with open("static/index.html") as f:
+            return HTMLResponse(f.read())
+    return HTMLResponse("<h1>Remote Control Relay</h1><p>Server is running. No dashboard files found.</p>")
 
 
 @app.get("/health")
